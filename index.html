@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Calculadora moderna com as quatro operações básicas."
+    />
+    <title>Calculadora Moderna</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="calculator" aria-labelledby="calculator-title">
+        <header class="calculator__header">
+          <div>
+            <p class="calculator__eyebrow">Calculadora</p>
+            <h1 id="calculator-title">Faça suas contas</h1>
+          </div>
+          <span class="calculator__indicator" aria-hidden="true"></span>
+        </header>
+
+        <div class="display-panel">
+          <div class="display-panel__meta">
+            <span>Expressão</span>
+            <span id="status" role="status" aria-live="polite">Pronto</span>
+          </div>
+          <p id="history" class="display-history" aria-hidden="true"></p>
+          <output
+            id="display"
+            class="display-value"
+            aria-label="Visor da calculadora"
+            aria-live="polite"
+            aria-atomic="true"
+          >0</output>
+        </div>
+
+        <div class="keypad" aria-label="Teclado da calculadora">
+          <button class="key key--utility" type="button" data-action="clear">
+            AC
+          </button>
+          <button class="key key--utility" type="button" data-action="delete">
+            DEL
+          </button>
+          <button
+            class="key key--operator"
+            type="button"
+            data-action="operator"
+            data-value="/"
+            aria-label="Dividir"
+          >
+            %
+          </button>
+          <button
+            class="key key--operator"
+            type="button"
+            data-action="operator"
+            data-value="*"
+            aria-label="Multiplicar"
+          >
+            X
+          </button>
+
+          <button class="key" type="button" data-action="number" data-value="7">7</button>
+          <button class="key" type="button" data-action="number" data-value="8">8</button>
+          <button class="key" type="button" data-action="number" data-value="9">9</button>
+          <button
+            class="key key--operator"
+            type="button"
+            data-action="operator"
+            data-value="-"
+            aria-label="Subtrair"
+          >
+            -
+          </button>
+
+          <button class="key" type="button" data-action="number" data-value="4">4</button>
+          <button class="key" type="button" data-action="number" data-value="5">5</button>
+          <button class="key" type="button" data-action="number" data-value="6">6</button>
+          <button
+            class="key key--operator"
+            type="button"
+            data-action="operator"
+            data-value="+"
+            aria-label="Somar"
+          >
+            +
+          </button>
+
+          <button class="key" type="button" data-action="number" data-value="1">1</button>
+          <button class="key" type="button" data-action="number" data-value="2">2</button>
+          <button class="key" type="button" data-action="number" data-value="3">3</button>
+          <button
+            class="key key--equals"
+            type="button"
+            data-action="calculate"
+            aria-label="Calcular resultado"
+          >
+            =
+          </button>
+
+          <button
+            class="key key--zero"
+            type="button"
+            data-action="number"
+            data-value="0"
+          >
+            0
+          </button>
+          <button
+            class="key"
+            type="button"
+            data-action="decimal"
+            aria-label="Ponto decimal"
+          >
+            .
+          </button>
+        </div>
+
+        <p class="keyboard-hint">Também funciona com o teclado</p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
