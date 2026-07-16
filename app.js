@@ -10,7 +10,7 @@ const MAX_EXPRESSION_LENGTH = 80;
 const OPERATORS = new Set(["+", "-", "*", "/"]);
 const DISPLAY_OPERATORS = {
   "*": "X",
-  "/": "%",
+  "/": "÷",
   "+": "+",
   "-": "-",
 };
@@ -21,12 +21,13 @@ const KEYBOARD_OPERATORS = {
   x: "*",
   X: "*",
   "/": "/",
-  "%": "/",
 };
 
 let expression = "";
 let errorMessage = "";
 let justCalculated = false;
+let pendingPercentage = null;
+let repeatOperation = null;
 let notificationTimer;
 
 // A expressão usa os operadores reais; somente esta função cria a versão visual.
@@ -61,7 +62,11 @@ function scrollDisplayToEnd() {
 }
 
 function render() {
-  display.textContent = errorMessage ? "Erro" : formatForDisplay(expression) || "0";
+  const visibleExpression = pendingPercentage
+    ? `${formatForDisplay(pendingPercentage.originalExpression)} %`
+    : formatForDisplay(expression);
+
+  display.textContent = errorMessage ? "Erro" : visibleExpression || "0";
   calculator.classList.toggle("has-error", Boolean(errorMessage));
 
   if (errorMessage) {
@@ -94,6 +99,8 @@ function resetCalculator(clearHistory = true) {
   expression = "";
   errorMessage = "";
   justCalculated = false;
+  pendingPercentage = null;
+  repeatOperation = null;
 
   if (clearHistory) {
     history.textContent = "";
@@ -148,6 +155,7 @@ function canAppend(amount = 1) {
 
 function appendNumber(number) {
   prepareForNewInput();
+  pendingPercentage = null;
 
   const currentNumber = getCurrentNumber();
 
@@ -164,6 +172,7 @@ function appendNumber(number) {
 
 function appendDecimal() {
   prepareForNewInput();
+  pendingPercentage = null;
 
   const currentNumber = getCurrentNumber();
 
@@ -216,6 +225,7 @@ function appendOperator(operator) {
     history.textContent = "";
   }
 
+  pendingPercentage = null;
   expression += operator;
   justCalculated = false;
   render();
@@ -229,8 +239,78 @@ function deleteLastCharacter() {
 
   expression = expression.slice(0, -1);
   justCalculated = false;
+  pendingPercentage = null;
+  repeatOperation = null;
   history.textContent = "";
   render();
+}
+
+function applyPercent() {
+  if (errorMessage) {
+    pulseInvalid("Comece com um número");
+    return;
+  }
+
+  if (!expression || expression === "-" || OPERATORS.has(expression.at(-1))) {
+    pulseInvalid("Digite um número para calcular a porcentagem");
+    return;
+  }
+
+  const originalExpression = expression;
+
+  try {
+    const operatorIndex = getLastOperatorIndex(expression);
+    const currentNumberText = expression.slice(operatorIndex + 1);
+    const currentNumber = Number(currentNumberText);
+
+    if (!Number.isFinite(currentNumber)) {
+      throw new Error("INVALID_EXPRESSION");
+    }
+
+    let percentageValue = currentNumber / 100;
+
+    if (operatorIndex >= 0) {
+      const operator = expression[operatorIndex];
+      const previousExpression = expression.slice(0, operatorIndex);
+
+      if (operator === "+" || operator === "-") {
+        const baseValue = evaluateExpression(previousExpression);
+        percentageValue = (baseValue * currentNumber) / 100;
+      }
+
+      expression = `${previousExpression}${operator}${normalizeResult(percentageValue)}`;
+      pendingPercentage = {
+        operator,
+        rate: currentNumber,
+        originalExpression,
+      };
+      justCalculated = false;
+    } else {
+      expression = normalizeResult(percentageValue);
+      history.textContent = "";
+      pendingPercentage = {
+        operator: null,
+        rate: currentNumber,
+        originalExpression,
+      };
+      repeatOperation = null;
+      justCalculated = true;
+    }
+
+    errorMessage = "";
+    render();
+  } catch (error) {
+    history.textContent = formatForDisplay(originalExpression);
+    expression = "";
+    justCalculated = false;
+    pendingPercentage = null;
+    repeatOperation = null;
+    errorMessage =
+      error.message === "DIVISION_BY_ZERO"
+        ? "Divisão por zero"
+        : "Operação inválida";
+    render();
+  }
 }
 
 function readNumber(source, startIndex, allowLeadingNegative) {
@@ -348,6 +428,78 @@ function normalizeResult(result) {
   return String(Number(result.toPrecision(12)));
 }
 
+function createRepeatOperation(source, percentageContext) {
+  if (percentageContext) {
+    if (!percentageContext.operator) {
+      return null;
+    }
+
+    return {
+      operator: percentageContext.operator,
+      operand: percentageContext.rate,
+      isPercent: true,
+    };
+  }
+
+  const operatorIndex = getLastOperatorIndex(source);
+
+  if (operatorIndex < 0) {
+    return null;
+  }
+
+  const operand = Number(source.slice(operatorIndex + 1));
+
+  if (!Number.isFinite(operand)) {
+    throw new Error("INVALID_EXPRESSION");
+  }
+
+  return {
+    operator: source[operatorIndex],
+    operand,
+    isPercent: false,
+  };
+}
+
+function applyRepeatOperation(value, operation) {
+  let operand = operation.operand;
+
+  if (!Number.isFinite(value) || !Number.isFinite(operand)) {
+    throw new Error("INVALID_RESULT");
+  }
+
+  if (operation.isPercent) {
+    operand =
+      operation.operator === "+" || operation.operator === "-"
+        ? (value * operand) / 100
+        : operand / 100;
+  }
+
+  if (operation.operator === "/" && operand === 0) {
+    throw new Error("DIVISION_BY_ZERO");
+  }
+
+  const operations = {
+    "+": () => value + operand,
+    "-": () => value - operand,
+    "*": () => value * operand,
+    "/": () => value / operand,
+  };
+  const result = operations[operation.operator]?.();
+
+  if (!Number.isFinite(result)) {
+    throw new Error("INVALID_RESULT");
+  }
+
+  return result;
+}
+
+function formatRepeatExpression(value, operation) {
+  const operand = formatForDisplay(normalizeResult(operation.operand));
+  const percentSymbol = operation.isPercent ? " %" : "";
+
+  return `${formatForDisplay(value)} ${DISPLAY_OPERATORS[operation.operator]} ${operand}${percentSymbol}`;
+}
+
 function calculate() {
   if (errorMessage) {
     return;
@@ -359,18 +511,50 @@ function calculate() {
   }
 
   const originalExpression = expression;
+  const percentageContext = pendingPercentage;
 
   try {
-    const result = evaluateExpression(originalExpression);
+    const operatorIndex = getLastOperatorIndex(originalExpression);
+    let result;
+    let visibleCalculation;
+
+    if (operatorIndex < 0 && repeatOperation) {
+      const currentValue = Number(originalExpression);
+
+      if (!Number.isFinite(currentValue)) {
+        throw new Error("INVALID_EXPRESSION");
+      }
+
+      result = applyRepeatOperation(currentValue, repeatOperation);
+      visibleCalculation = formatRepeatExpression(
+        originalExpression,
+        repeatOperation,
+      );
+    } else {
+      result = evaluateExpression(originalExpression);
+      repeatOperation = createRepeatOperation(
+        originalExpression,
+        percentageContext,
+      );
+      visibleCalculation = percentageContext
+        ? `${formatForDisplay(percentageContext.originalExpression)} %`
+        : formatForDisplay(originalExpression);
+    }
+
     expression = normalizeResult(result);
-    history.textContent = `${formatForDisplay(originalExpression)} =`;
+    history.textContent = `${visibleCalculation} =`;
     errorMessage = "";
     justCalculated = true;
+    pendingPercentage = null;
     render();
   } catch (error) {
-    history.textContent = formatForDisplay(originalExpression);
+    history.textContent = percentageContext
+      ? `${formatForDisplay(percentageContext.originalExpression)} %`
+      : formatForDisplay(originalExpression);
     expression = "";
     justCalculated = false;
+    pendingPercentage = null;
+    repeatOperation = null;
     errorMessage =
       error.message === "DIVISION_BY_ZERO"
         ? "Divisão por zero"
@@ -383,6 +567,7 @@ function runAction(action, value) {
   const actions = {
     number: () => appendNumber(value),
     decimal: appendDecimal,
+    percent: applyPercent,
     operator: () => appendOperator(value),
     calculate,
     delete: deleteLastCharacter,
@@ -429,6 +614,10 @@ document.addEventListener("keydown", (event) => {
       `[data-action="operator"][data-value="${operator}"]`,
     );
     appendOperator(operator);
+  } else if (key === "%") {
+    event.preventDefault();
+    button = keypad.querySelector('[data-action="percent"]');
+    applyPercent();
   } else if (key === ".") {
     event.preventDefault();
     button = keypad.querySelector('[data-action="decimal"]');
@@ -437,11 +626,11 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     button = keypad.querySelector('[data-action="calculate"]');
     calculate();
-  } else if (key === "Backspace" || key === "Delete") {
+  } else if (key === "Backspace") {
     event.preventDefault();
     button = keypad.querySelector('[data-action="delete"]');
     deleteLastCharacter();
-  } else if (key === "Escape") {
+  } else if (key === "Delete" || key === "Escape") {
     event.preventDefault();
     button = keypad.querySelector('[data-action="clear"]');
     resetCalculator();

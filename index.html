@@ -37,11 +37,29 @@
         </div>
 
         <div class="keypad" aria-label="Teclado da calculadora">
-          <button class="key key--utility" type="button" data-action="clear">
+          <button
+            class="key key--utility"
+            type="button"
+            data-action="delete"
+            aria-label="Backspace: apagar último caractere"
+          >
+            <span class="clear-icon" aria-hidden="true">X</span>
+          </button>
+          <button
+            class="key key--utility"
+            type="button"
+            data-action="clear"
+            aria-label="AC: apagar tudo"
+          >
             AC
           </button>
-          <button class="key key--utility" type="button" data-action="delete">
-            DEL
+          <button
+            class="key key--operator"
+            type="button"
+            data-action="percent"
+            aria-label="Porcentagem"
+          >
+            %
           </button>
           <button
             class="key key--operator"
@@ -50,8 +68,12 @@
             data-value="/"
             aria-label="Dividir"
           >
-            %
+            ÷
           </button>
+
+          <button class="key" type="button" data-action="number" data-value="7">7</button>
+          <button class="key" type="button" data-action="number" data-value="8">8</button>
+          <button class="key" type="button" data-action="number" data-value="9">9</button>
           <button
             class="key key--operator"
             type="button"
@@ -62,9 +84,9 @@
             X
           </button>
 
-          <button class="key" type="button" data-action="number" data-value="7">7</button>
-          <button class="key" type="button" data-action="number" data-value="8">8</button>
-          <button class="key" type="button" data-action="number" data-value="9">9</button>
+          <button class="key" type="button" data-action="number" data-value="4">4</button>
+          <button class="key" type="button" data-action="number" data-value="5">5</button>
+          <button class="key" type="button" data-action="number" data-value="6">6</button>
           <button
             class="key key--operator"
             type="button"
@@ -75,9 +97,9 @@
             -
           </button>
 
-          <button class="key" type="button" data-action="number" data-value="4">4</button>
-          <button class="key" type="button" data-action="number" data-value="5">5</button>
-          <button class="key" type="button" data-action="number" data-value="6">6</button>
+          <button class="key" type="button" data-action="number" data-value="1">1</button>
+          <button class="key" type="button" data-action="number" data-value="2">2</button>
+          <button class="key" type="button" data-action="number" data-value="3">3</button>
           <button
             class="key key--operator"
             type="button"
@@ -86,18 +108,6 @@
             aria-label="Somar"
           >
             +
-          </button>
-
-          <button class="key" type="button" data-action="number" data-value="1">1</button>
-          <button class="key" type="button" data-action="number" data-value="2">2</button>
-          <button class="key" type="button" data-action="number" data-value="3">3</button>
-          <button
-            class="key key--equals"
-            type="button"
-            data-action="calculate"
-            aria-label="Calcular resultado"
-          >
-            =
           </button>
 
           <button
@@ -115,6 +125,14 @@
             aria-label="Ponto decimal"
           >
             .
+          </button>
+          <button
+            class="key key--equals"
+            type="button"
+            data-action="calculate"
+            aria-label="Calcular resultado"
+          >
+            =
           </button>
         </div>
 

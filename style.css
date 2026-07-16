@@ -242,13 +242,24 @@ button {
   letter-spacing: 0.035em;
 }
 
+.clear-icon {
+  display: grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .key--operator {
   color: #d8d3ff;
   background: rgba(124, 108, 255, 0.14);
 }
 
 .key--equals {
-  grid-row: span 2;
   color: #ffffff;
   background: linear-gradient(155deg, #8b7cff, #6654eb);
   border-color: rgba(255, 255, 255, 0.18);
